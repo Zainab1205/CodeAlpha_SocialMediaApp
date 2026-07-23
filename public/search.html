@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Search - CodeAlpha Social</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<nav id="site-nav"></nav>
+
+<div class="container">
+  <h2>Search Results</h2>
+  <div id="results-card" class="card"></div>
+</div>
+
+<footer>&copy; 2026 CodeAlpha Social — Full Stack Development Task 2</footer>
+
+<script src="/js/app.js"></script>
+<script>
+(async () => {
+  await renderNav();
+  const q = qs('q') || '';
+  const results = await api('/users/search?q=' + encodeURIComponent(q));
+  const card = document.getElementById('results-card');
+  if (results.length === 0) {
+    card.innerHTML = `<p class="empty-state">No users found for "${q}".</p>`;
+    return;
+  }
+  card.innerHTML = results.map(u => `
+    <a class="user-row" href="/profile.html?username=${u.username}">
+      ${avatarHTML(u)}
+      <div class="info">
+        <div class="name">${u.name}</div>
+        <div class="username">@${u.username}</div>
+      </div>
+    </a>
+  `).join('');
+})();
+</script>
+</body>
+</html>

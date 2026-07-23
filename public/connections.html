@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connections - CodeAlpha Social</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<nav id="site-nav"></nav>
+
+<div class="container">
+  <h2 id="page-title"></h2>
+  <div id="list-card" class="card"></div>
+</div>
+
+<footer>&copy; 2026 CodeAlpha Social — Full Stack Development Task 2</footer>
+
+<script src="/js/app.js"></script>
+<script>
+(async () => {
+  await renderNav();
+  const username = qs('username');
+  const type = qs('type') === 'followers' ? 'followers' : 'following';
+  document.getElementById('page-title').textContent = `${type === 'followers' ? 'Followers' : 'Following'} of @${username}`;
+  const users = await api(`/users/${username}/${type}`);
+  const listCard = document.getElementById('list-card');
+  if (users.length === 0) {
+    listCard.innerHTML = `<p class="empty-state">No ${type} yet.</p>`;
+    return;
+  }
+  listCard.innerHTML = users.map(u => `
+    <a class="user-row" href="/profile.html?username=${u.username}">
+      ${avatarHTML(u)}
+      <div class="info">
+        <div class="name">${u.name}</div>
+        <div class="username">@${u.username}</div>
+      </div>
+    </a>
+  `).join('');
+})();
+</script>
+</body>
+</html>

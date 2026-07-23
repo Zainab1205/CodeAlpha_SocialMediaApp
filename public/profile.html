@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile - CodeAlpha Social</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<nav id="site-nav"></nav>
+
+<div class="container">
+  <div id="profile-card" class="card"></div>
+  <div id="posts-card" class="card"></div>
+</div>
+
+<footer>&copy; 2026 CodeAlpha Social — Full Stack Development Task 2</footer>
+
+<script src="/js/app.js"></script>
+<script src="/js/posts.js"></script>
+<script>
+let currentUser = null;
+
+async function loadProfile() {
+  const username = qs('username');
+  const profileCard = document.getElementById('profile-card');
+  const postsCard = document.getElementById('posts-card');
+  try {
+    const profile = await api('/users/' + username);
+    profileCard.innerHTML = `
+      <div class="profile-header">
+        ${avatarHTML(profile)}
+        <div style="flex:1">
+          <h2 style="margin:0">${profile.name}</h2>
+          <div style="color:#64748b">@${profile.username}</div>
+        </div>
+        ${profile.isMe
+          ? `<button class="btn btn-outline btn-sm" id="edit-bio-btn">Edit Bio</button>`
+          : currentUser
+            ? `<button class="btn ${profile.isFollowing ? 'btn-outline active' : ''} btn-sm" id="follow-btn">${profile.isFollowing ? 'Following' : 'Follow'}</button>`
+            : ''}
+      </div>
+      <p id="bio-text">${profile.bio ? escapeHtml(profile.bio) : '<span style="color:#94a3b8">No bio yet.</span>'}</p>
+      <div class="profile-stats">
+        <div><strong>${profile.postCount}</strong><span>Posts</span></div>
+        <a href="/connections.html?username=${profile.username}&type=followers"><strong>${profile.followerCount}</strong><span>Followers</span></a>
+        <a href="/connections.html?username=${profile.username}&type=following"><strong>${profile.followingCount}</strong><span>Following</span></a>
+      </div>
+    `;
+
+    if (profile.isMe) {
+      document.getElementById('edit-bio-btn').addEventListener('click', async () => {
+        const newBio = prompt('Update your bio:', profile.bio || '');
+        if (newBio === null) return;
+        await api('/users/me', { method: 'PUT', body: JSON.stringify({ bio: newBio }) });
+        loadProfile();
+      });
+    }
+    const followBtn = document.getElementById('follow-btn');
+    if (followBtn) {
+      followBtn.addEventListener('click', async () => {
+        const result = await api(`/users/${username}/follow`, { method: 'POST' });
+        loadProfile();
+      });
+    }
+
+    if (profile.posts.length === 0) {
+      postsCard.innerHTML = `<p class="empty-state">No posts yet.</p>`;
+    } else {
+      postsCard.innerHTML = profile.posts.map(p => renderPost(p, currentUser)).join('');
+      attachPostHandlers(postsCard, currentUser);
+    }
+  } catch (e) {
+    profileCard.innerHTML = `<p class="empty-state">${e.message}</p>`;
+  }
+}
+
+(async () => {
+  currentUser = await renderNav();
+  await loadProfile();
+})();
+</script>
+</body>
+</html>
